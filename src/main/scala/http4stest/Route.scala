@@ -2,6 +2,7 @@ package http4stest
 
 import org.http4s._
 import play.api.libs.iteratee.{Done, Enumeratee}
+import play.api.libs.iteratee.Concurrent.Channel
 import akka.util.ByteString
 import org.http4s.HttpHeaders.{TransferEncoding}
 
@@ -23,14 +24,11 @@ object Route {
 
     case Post -> Root / "jsonstream" =>
       val pipe = Enumeratee.map[HttpChunk]{
-                          case BodyChunk(s) =>
-                            val str = new String(s.toArray)
-                            println("Debug: made it here: " + str)
-                            str
+                          case BodyChunk(s) => new String(s.toArray)
                           case _ => ""                                  } ><>
                        play.extras.iteratees.JsonPipeline.arrayParser[ID] ><>
                        Enumeratee.map(id => s"Hello ${id.name}. Your ID is ${id.id}")
-      Done(Ok(pipe).addHeader(TransferEncoding(HttpEncodings.chunked)))
+      Ok(pipe).addHeader(TransferEncoding(HttpEncodings.chunked))
   }
 
 
